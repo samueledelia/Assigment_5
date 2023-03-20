@@ -1,5 +1,6 @@
 import pandas as pd
 from utilities import analytical_normal_measures
+
 '''
  Extract shares prices of our Portfolio
 '''
@@ -14,10 +15,10 @@ stocks_df = euro_stock50_df[ticker].copy()
 '''
 Setting parameters
 '''
-alpha = 0.95  # significant level
+alpha = 0.95                        # significant level
 weights = [0.25, 0.25, 0.25, 0.25]  # we assume equally weighted
-delta = 1    # delta time lag
-N = 1e6
+delta = 1                           # delta time lag
+notional = 1e6                      # 1 MIO of notional
 
 '''
 Compute the Var and ES
@@ -26,5 +27,6 @@ shares = stocks_df.loc["2013-01-02":"2019-03-19"].copy()
 returns = shares / shares.shift(delta)
 returns.drop(index=returns.index[0], axis=0, inplace=True)  # Drop first row
 
-var = analytical_normal_measures(alpha, weights, returns)
-print('the Var', var)
+var, es = analytical_normal_measures(alpha, weights, returns)
+final_var = var * notional
+final_es = es * notional
