@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import norm
 import math
-
+import scipy.linalg as la
 
 def analytical_normal_measures(alpha, weights, delta, portfolio_value, returns):
     x = np.log(returns)  # log return vector
@@ -40,8 +40,24 @@ def whs_measurements(returns, alpha, weights, lambda_portfolio):
     loses_values = loses_values.sum(axis=1)
 
     n2 = len(loses_values)
-    c = (1 - lambda_portfolio) / ((1 - lambda_portfolio) ** n2)
-    loses_weights = c * (lambda_portfolio**(np.array(n*ones(n2,1)-list(range(1, n2)))))
-    loses_values = np.dot(loses_weights,loses_values)
+    c = (1 - lambda_portfolio) / (1 - lambda_portfolio ** n2)
+    loses_weights = c * (np.power(lambda_portfolio, list(range(0, n2))))
+    loses_values = np.multiply(loses_weights, loses_values)
     sorted_loses_values = loses_values.sort_values(ascending=False)
-    print(sorted_loses_values)
+
+    # Compute the Var and the ES
+    n = len(sorted_loses_values)
+    position = math.floor(n * (1 - alpha))  # position is the largest integer not exceeding n*(1-alpha)
+    loses_for_es = sorted_loses_values[position:]
+
+    var = sorted_loses_values[position]
+    es = loses_for_es.mean()
+    return var, es
+
+'''
+def princ_comp_analysis(yearly_covariance,):
+    yearly_covariance = yearly_covariance.T
+    yearly_covariance_mean = yearly_covariance.mean(axis=1)
+    yearly_covariance_norm = yearly_covariance - yearly_covariance_mean[:, None]
+
+ '''
