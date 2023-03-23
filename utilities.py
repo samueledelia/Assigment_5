@@ -1,7 +1,9 @@
 import numpy as np
+import pandas as pd
 from scipy.stats import norm
 import math
 import scipy.linalg as la
+
 
 def analytical_normal_measures(alpha, weights, delta, portfolio_value, returns):
     x = np.log(returns)  # log return vector
@@ -16,6 +18,17 @@ def analytical_normal_measures(alpha, weights, delta, portfolio_value, returns):
     es_std = 1 / ((1 - alpha) * np.sqrt(2 * np.pi)) * np.exp(-(norm_inv ** 2) / 2)
     es = (-delta * mu_port + np.sqrt(delta) * es_std * np.sqrt(sigma_port)) * portfolio_value
     return var, es
+
+
+def calculate_portfolio_metrics(n_shares, portfolio_df, delta):
+    stocks_value = np.multiply(n_shares, portfolio_df)
+    value_portfolio = stocks_value.sum(axis=1)
+    weights = np.array(stocks_value) / np.array(value_portfolio)[:, None]
+    weights = np.delete(weights, 0, axis=0)  # Drop first row
+    shares = portfolio_df  # Consider only the shares of the last delta periods
+    returns = shares / shares.shift(delta)  # Compute the return for each company's shares
+    returns.drop(index=returns.index[0], axis=0, inplace=True)  # Drop first row
+    return weights, returns
 
 
 def hs_measurements(returns, alpha, weights):
@@ -54,10 +67,11 @@ def whs_measurements(returns, alpha, weights, lambda_portfolio):
     es = loses_for_es.mean()
     return var, es
 
-'''
-def princ_comp_analysis(yearly_covariance,):
+
+def princ_comp_analysis(yearly_covariance, ):
     yearly_covariance = yearly_covariance.T
     yearly_covariance_mean = yearly_covariance.mean(axis=1)
     yearly_covariance_norm = yearly_covariance - yearly_covariance_mean[:, None]
-
- '''
+    U, s, VT = np.linalg.svd(yearly_covariance_norm, full_matrices=True)
+    S = la.diagsvd(s, yearly_covariance.shape[0], yearly_covariance.shape[1])
+    Phi = np.matmul(U.transpose(), yearly_covariance_norm)

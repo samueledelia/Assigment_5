@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
-from utilities import hs_measurements, whs_measurements
+import random
+from utilities import hs_measurements, whs_measurements, calculate_portfolio_metrics
+
 
 # Setting the Dataframes and parameters
 
@@ -18,6 +20,7 @@ stocks_portfolio1 = ['TotalEnergies', 'Danone', 'Sanofi', 'Volkswagen Group']
 ticker_portfolio1 = [index_df[index_df['Name'] == stock].Ticker.values.tolist()[0] for stock in stocks_portfolio1]
 portfolio1_df = euro_stock50_df[ticker_portfolio1].copy()
 portfolio1_df = portfolio1_df.loc["2016-03-18":"2019-03-20"]
+
 # Setting parameters
 
 alpha = 0.99                            # significant level
@@ -25,17 +28,28 @@ n_shares = [25e3, 20e3, 20e3, 10e3]     # n of shares for each company
 
 # Compute the Var and ES with HS
 
-stocks_value_1 = np.multiply(n_shares, portfolio1_df)
-value_portfolio_1 = stocks_value_1.sum(axis=1)
-weights_1 = np.array(stocks_value_1)/np.array(value_portfolio_1)[:, None]
-weights_1 = np.delete(weights_1, 0, axis=0)      # Drop first row
-shares_1 = portfolio1_df.loc["2016-03-18":"2019-03-20"].copy()    # Consider only the shares of the last 3y
-returns_1 = shares_1 / shares_1.shift(delta)                          # Compute the return for each company shares
-returns_1.drop(index=returns_1.index[0], axis=0, inplace=True)      # Drop first row
+weights_1_hs, returns_1_hs = calculate_portfolio_metrics(n_shares, portfolio1_df, delta)
+var_hs, es_hs = hs_measurements(returns_1_hs, alpha, weights_1_hs)
 
-var_hs, es_hs = hs_measurements(returns_1, alpha, weights_1)
+print("The Historical Simulation results for the portfolio are:")
+print("Value at Risk (VaR): {:.5f}%".format(var_hs * 100))
+print("Expected Shortfall (ES): {:.5f}%".format(es_hs * 100))
+print("   ")
 
-print(var_hs, es_hs)
+# Compute Var and ES with Bootstrap
+
+N = np.array(portfolio1_df).shape
+numberOfSamplesToBootstrap = 200
+index = [random.randint(1, N[0]-1) for x in range(numberOfSamplesToBootstrap)]
+
+returns_1_boot = returns_1_hs.iloc[index].copy()
+weights_1_boot = weights_1_hs[index, :]
+var_boot, es_boot = hs_measurements(returns_1_boot, alpha, weights_1_boot)
+print("The Bootstrap results for the portfolio are:")
+print("Value at Risk (VaR): {:.5f}%".format(var_boot * 100))
+print("Expected Shortfall (ES): {:.5f}%".format(es_boot * 100))
+print("   ")
+
 
 '''
 Point b: Compute daily VaR and ES with a 3y estimation using the dataset provided via a Weighted Historical Simulation 
@@ -60,15 +74,16 @@ returns_2.drop(index=returns_2.index[0], axis=0, inplace=True)      # Drop first
 
 var_whs, es_whs = whs_measurements(returns_2, alpha, weights_2, lambda_portfolio2)
 
-print(var_whs, es_whs)
-
+print("The Weighted Historical Simulation results for the portfolio are:")
+print("Value at Risk (VaR): {:.5f}%".format(var_whs * 100))
+print("Expected Shortfall (ES): {:.5f}%".format(es_whs * 100))
 '''
 Point c: Compute 10 days VaR and ES with a 3y estimation using the dataset provided via a Gaussian parametric PCA 
          approach using the first n principal components, with the parameter n =1,..,6.
 '''
-
+'''
 stocks_portfolio3 = np.linspace(0, 19, 20)
 portfolio3_df = euro_stock50_df.iloc[:, stocks_portfolio3].copy()
 portfolio3_df.drop("ADYEN.AS", axis=1, inplace=True)
 yearly_covariance = np.cov(portfolio3_df)
-print(yearly_covariance)
+print(yearly_covariance)'''
