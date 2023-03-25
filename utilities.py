@@ -28,29 +28,31 @@ def calculate_portfolio_metrics(n_shares, portfolio_df, delta):
     shares = portfolio_df  # Consider only the shares of the last delta periods
     returns = shares / shares.shift(delta)  # Compute the return for each company's shares
     returns.drop(index=returns.index[0], axis=0, inplace=True)  # Drop first row
-    return weights, returns
+    return weights, returns, value_portfolio
 
 
-def hs_measurements(returns, alpha, weights):
+def hs_measurements(returns, alpha, weights, value_portfolio):
+    value_portfolio = value_portfolio[0:len(value_portfolio)-1]
     x = np.log(returns)  # log return vector
     loses_values = -np.multiply(x, weights)
-    loses_values = loses_values.sum(axis=1)
+    loses_values = np.multiply(loses_values.sum(axis=1), value_portfolio)
     sorted_loses_values = loses_values.sort_values(ascending=False)
 
     # Compute the Var and the ES
     n = len(sorted_loses_values)
     position = math.floor(n * (1 - alpha))  # position is the largest integer not exceeding n*(1-alpha)
-    loses_for_es = sorted_loses_values[position:]
+    loses_for_es = sorted_loses_values[:position]
 
     var = sorted_loses_values[position]
     es = loses_for_es.mean()
     return var, es
 
 
-def whs_measurements(returns, alpha, weights, lambda_portfolio):
+def whs_measurements(returns, alpha, weights, lambda_portfolio,value_portfolio):
+    value_portfolio = value_portfolio[0:len(value_portfolio) - 1]
     x = np.log(returns)  # log return vector
     loses_values = -np.multiply(x, weights)
-    loses_values = loses_values.sum(axis=1)
+    loses_values = np.multiply(loses_values.sum(axis=1), value_portfolio)
 
     n2 = len(loses_values)
     c = (1 - lambda_portfolio) / (1 - lambda_portfolio ** n2)
