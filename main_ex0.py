@@ -1,6 +1,5 @@
 import pandas as pd
-from utilities import analytical_normal_measures
-import numpy as np
+from utilities import analytical_normal_measures, plausibility_check
 
 # Extract shares prices of our Portfolio
 
@@ -24,8 +23,15 @@ notional = 1e6                      # 1 MIO of notional
 shares = stocks_df.loc["2016-03-18":"2019-03-20"].copy()        # Consider only the shares of the last 3y
 returns = shares / shares.shift(delta)                          # Compute the return for each company shares
 returns.drop(index=returns.index[0], axis=0, inplace=True)      # Drop first row
-portfolio_value = np.dot(weights, stocks_df.loc["2019-03-20"].copy())*notional
+portfolio_value = notional
 
 var, es = analytical_normal_measures(alpha, weights, delta, portfolio_value, returns)
-print(var)
-print(es)
+print("The Analytical Normal Measure results for the portfolio are:")
+print("Value at Risk (VaR): {:.5f}".format(var))
+print("Expected Shortfall (ES): {:.5f}".format(es))
+print("   ")
+
+'''
+var_check = plausibility_check(returns, weights, alpha, delta, portfolio_value)
+print("Plausibility Check: {:.5f}".format(var_check))
+'''
