@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 import math
-import scipy.linalg as la
 
 
 def analytical_normal_measures(alpha, weights, delta, portfolio_value, returns):
@@ -87,20 +86,35 @@ def whs_measurements(returns, alpha, weights, lambda_portfolio, value_portfolio)
     return var, es
 
 
-def princ_comp_analysis(yearly_covariance, ):
-    yearly_covariance = yearly_covariance.T
-    yearly_covariance_mean = yearly_covariance.mean(axis=1)
-    yearly_covariance_norm = yearly_covariance - yearly_covariance_mean[:, None]
-    U, s, VT = np.linalg.svd(yearly_covariance_norm, full_matrices=True)
-    S = la.diagsvd(s, yearly_covariance.shape[0], yearly_covariance.shape[1])
-    Phi = np.matmul(U.transpose(), yearly_covariance_norm)
+def pca_var_es(log_returns, weights, k, delta, alpha_std, notional):
+    log_returns = log_returns.T
+    epsilon_matrix = np.cov(log_returns)
+    nu = np.mean(log_returns, axis=1)[:, None]
+    eigenvalues, eigenvectors = np.linalg.eigh(epsilon_matrix)
+    idx = eigenvalues.argsort()[::-1]
+    eigenvalues = eigenvalues[idx]
+    eigenvectors = eigenvectors[:, idx]
+    gamma_matrix = eigenvectors
+    weights_projected = gamma_matrix.transpose() @ weights
+    weights_projected = np.reshape(weights_projected, (nu.shape[0], 1))
+    nu = np.reshape(nu, (nu.shape[0], 1))
+    eigenvalues = np.reshape(eigenvalues, (nu.shape[0], 1))
+    nu_red = np.dot(weights_projected[0:k, 0], nu[0:k, 0])
+    sigma_red = np.dot(np.multiply(weights_projected[0:k, 0], weights_projected[0:k, 0]), eigenvalues[0:k, 0])
+
+    var_alpha_std = norm.ppf(alpha_std)
+    var = notional * (-delta * nu_red + np.sqrt(delta) * np.sqrt(sigma_red) * var_alpha_std)
+
+    return var
 
 
 def plausibility_check(returns, weights, alpha, delta, value_portfolio):
     x = np.log(returns)
+    index = np.arange(delta, len(x), delta)
+    x = x.iloc[index]
+    n = len(x)
     mu = x.mean()
     mu_port = np.dot(weights, mu)
-    n = len(x)
     n_shares = len(weights)
     ordered_x = np.zeros((n, n_shares))
     for i in np.arange(n_shares):
@@ -113,5 +127,8 @@ def plausibility_check(returns, weights, alpha, delta, value_portfolio):
     correlation_matrix = x.corr()
 
     var_approx = np.sqrt(np.dot(s_var, np.dot(correlation_matrix, s_var.T)))
-    var_check = (-delta * mu_port[0] + np.sqrt(delta) * var_approx) * value_portfolio
+    var_check = (-delta * mu_port + np.sqrt(delta) * var_approx) * value_portfolio
     return var_check
+
+def full_montecarlo_var(x, n_shares, n_puts, stock_price, strike, rate, dividend, volatility, ttm, delta, alpha, n_days_per_y):
+    pass
