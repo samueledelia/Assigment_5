@@ -1,5 +1,5 @@
 import pandas as pd
-from utilities import analytical_normal_measures, plausibility_check
+from utilities import analytical_normal_measures
 
 # Extract shares prices of our Portfolio
 
@@ -16,7 +16,7 @@ stocks_df = euro_stock50_df[ticker].copy()      # dataset of the stocks we are i
 alpha = 0.95                        # significant level
 weights = [0.25, 0.25, 0.25, 0.25]  # we assume equally weighted
 delta = 1                           # delta time lag
-notional = 1e6                      # 1 MIO of notional
+notional = 1e7                      # 1 MIO of notional
 
 # Compute the Var and ES
 
@@ -30,8 +30,3 @@ print("The Analytical Normal Measure results for the portfolio are:")
 print("Value at Risk (VaR): {:.5f}".format(var))
 print("Expected Shortfall (ES): {:.5f}".format(es))
 print("   ")
-
-'''
-var_check = plausibility_check(returns, weights, alpha, delta, portfolio_value)
-print("Plausibility Check: {:.5f}".format(var_check))
-'''

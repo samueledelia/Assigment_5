@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import utilities
 
+
 # Setting the Dataframes and parameters
 
 index_df = pd.read_csv('_indexes.csv', index_col=0)
@@ -14,6 +15,7 @@ delta = 1
 Point a: Compute daily VaR and ES with a 3y estimation using the dataset provided via a Historical Simulation
          approach and a Bootstrap method with 200 simulations
 '''
+
 stocks_portfolio1 = ['TotalEnergies', 'Danone', 'Sanofi', 'Volkswagen Group']
 ticker_portfolio1 = [index_df[index_df['Name'] == stock].Ticker.values.tolist()[0] for stock in stocks_portfolio1]
 portfolio1_df = euro_stock50_df[ticker_portfolio1].copy()
@@ -21,7 +23,7 @@ portfolio1_df = portfolio1_df.loc["2016-03-18":"2019-03-20"]
 
 # Setting parameters
 
-alpha = 0.99  # significant level
+alpha = 0.99                         # significant level
 n_shares = [25e3, 20e3, 20e3, 10e3]  # n of shares for each company
 
 # Compute the Var and ES with HS
@@ -37,6 +39,7 @@ print("Plausibility Check: {:.5f}".format(var_check_hs[0][0]))
 print("   ")
 
 # Compute Var and ES with Bootstrap
+
 
 portfolio_size = np.array(portfolio1_df).shape
 numberOfSamplesToBootstrap = 200
@@ -96,6 +99,7 @@ portfolio3_df.drop("ADYEN.AS", axis=1, inplace=True)
 shares_3 = portfolio3_df
 returns_3 = shares_3 / shares_3.shift(delta)
 returns_3.drop(index=returns_3.index[:1], axis=0, inplace=True)
+
 # building weights
 n3 = returns_3.shape[1]
 weights_3 = np.ones(n3) / n3

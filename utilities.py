@@ -3,7 +3,6 @@ import pandas as pd
 from scipy.stats import norm
 import math
 
-
 def analytical_normal_measures(alpha, weights, delta, portfolio_value, returns):
     x = np.log(returns)  # log return vector
     mu = x.mean()
@@ -54,7 +53,8 @@ def hs_measurements(returns, alpha, weights, value_portfolio_at_t):
     return var, es
 
 
-def bootstrap_statistical(portfolio_size, numberOfSamplesToBootstrap, ):
+def bootstrap_statistical(portfolio_size, numberOfSamplesToBootstrap):
+    np.random.seed(0)
     index = [np.random.randint(0, portfolio_size[0] - 1) for x in range(numberOfSamplesToBootstrap)]
     return index
 
@@ -122,31 +122,6 @@ def plausibility_check(returns, weights, alpha, delta, value_portfolio):
     var_check = (-delta * mu_port + np.sqrt(delta) * var_approx) * value_portfolio
     return var_check
 
-#
-# def plausibility_check(returns, weights, alpha, delta, value_portfolio):
-#     mu = returns.mean()
-#     mu_port = np.dot(weights, mu)
-#
-#     n = returns.shape[0]
-#     n_shares = weights.shape[0]
-#     ordered_x = np.zeros((n, n_shares))
-#     for i in np.arange(n_shares):
-#         ordered_x[:, i] = returns.iloc[:, i].sort_values().copy()
-#
-#     position_l = math.floor(n * (1 - alpha))
-#     position_u = math.floor(n * alpha)
-#
-#     l = ordered_x[position_l, :]
-#     u = ordered_x[position_u, :]
-#
-#     s_var = np.array(weights) * (np.abs(l) + np.abs(u)) / 2
-#
-#     correlation_matrix = returns.corr()
-#
-#     var_approx = np.sqrt(np.dot(s_var, np.dot(correlation_matrix, s_var.T)))
-#     var_check = (-delta * mu_port + np.sqrt(delta) * var_approx) * value_portfolio
-#     return var_check
-
 def putprice_BS(s0, K, sigma, r, q, deltaTime):
     d1 = (np.log(s0 / K) + (r - q + sigma ** 2 / 2) * (deltaTime)) / (np.sqrt(deltaTime) * sigma)
     d2 = d1 - sigma * np.sqrt(deltaTime)
@@ -206,11 +181,11 @@ def DeltaGammaNormalVaR(logReturns, numberOfShares, numberOfPuts, stockPrice, st
     return losses[0, index]
 
 
-def expectedPaymentI(s0, rate, volatility, yearOfThePayment, distPayment):
-    meanstock = s0 * np.exp(rate * (yearOfThePayment - 1))
-    cost = np.exp(rate * distPayment)
-    d1 = (rate + volatility ** 2 / 2) * distPayment / (volatility * np.sqrt(distPayment))
-    d2 = d1 - volatility * np.sqrt(distPayment)
+def expectedPaymentI(s0, discount1, discount2, volatility, distPayment):
+    meanstock = s0 * 1/discount1
+    cost = discount1/discount2
+    d1 = (np.log(discount1/discount2)+(volatility**2/2)*distPayment)/(volatility*np.sqrt(distPayment))
+    d2 = d1-volatility*np.sqrt(distPayment)
     integral1 = norm.cdf(d1)
     integral2 = norm.cdf(d2)
-    return meanstock * (cost * integral1 - integral2)
+    return meanstock*(cost*integral1-integral2)
